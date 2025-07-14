@@ -35,10 +35,10 @@ class Server(object):
         self.top_cnt = args.top_cnt
         self.auto_break = args.auto_break
 
-        self.clients = []
+        self.clients = []  # 长为num_clients长度的Client对象列表, 该对象有属性表示自己是否是train slow client或者send slow client
         self.selected_clients = []
-        self.train_slow_clients = []
-        self.send_slow_clients = []
+        self.train_slow_clients = []  # 本地训练慢速client
+        self.send_slow_clients = []   # 通信慢速client
 
         self.uploaded_weights = []
         self.uploaded_ids = []
@@ -64,6 +64,7 @@ class Server(object):
         self.fine_tuning_epoch_new = args.fine_tuning_epoch_new
 
     def set_clients(self, clientObj):
+        """用clientObj类型创建所有的client对象, 并加入self.clients列表中"""
         for i, train_slow, send_slow in zip(range(self.num_clients), self.train_slow_clients, self.send_slow_clients):
             train_data = read_client_data(self.dataset, i, is_train=True, few_shot=self.few_shot)
             test_data = read_client_data(self.dataset, i, is_train=False, few_shot=self.few_shot)
@@ -77,6 +78,12 @@ class Server(object):
 
     # random select slow clients
     def select_slow_clients(self, slow_rate):
+        """按比例随机选择slow client
+
+            return: 
+                num_clients长度的bool列表, 表示每个client是否是slow client 
+             
+        """
         slow_clients = [False for i in range(self.num_clients)]
         idx = [i for i in range(self.num_clients)]
         idx_ = np.random.choice(idx, int(slow_rate * self.num_clients))
@@ -86,14 +93,20 @@ class Server(object):
         return slow_clients
 
     def set_slow_clients(self):
+        """指定哪些client是train slow clients或send slow clients"""
         self.train_slow_clients = self.select_slow_clients(
             self.train_slow_rate)
         self.send_slow_clients = self.select_slow_clients(
             self.send_slow_rate)
 
     def select_clients(self):
+        """选择random_join_ratio比例的clients
+
+            return:
+                Client对象列表
+        """
         if self.random_join_ratio:
-            self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0]
+            self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0] # replace=False表示序列中元素不可被选择多次, 返回一个array, 因此用[0]
         else:
             self.current_num_join_clients = self.num_join_clients
         selected_clients = list(np.random.choice(self.clients, self.current_num_join_clients, replace=False))
@@ -101,6 +114,7 @@ class Server(object):
         return selected_clients
 
     def send_models(self):
+        """为所有的client更新模型参数"""
         assert (len(self.clients) > 0)
 
         for client in self.clients:
@@ -108,8 +122,8 @@ class Server(object):
             
             client.set_parameters(self.global_model)
 
-            client.send_time_cost['num_rounds'] += 1
-            client.send_time_cost['total_cost'] += 2 * (time.time() - start_time)
+            client.send_time_cost['num_rounds'] += 1  # 通信轮数+1
+            client.send_time_cost['total_cost'] += 2 * (time.time() - start_time) # 计算通信总时长
 
     def receive_models(self):
         assert (len(self.selected_clients) > 0)

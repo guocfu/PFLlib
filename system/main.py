@@ -185,7 +185,7 @@ def run(args):
         # select algorithm
         if args.algorithm == "FedAvg":
             args.head = copy.deepcopy(args.model.fc)
-            args.model.fc = nn.Identity()
+            args.model.fc = nn.Identity() # 恒等映射, 不对输入进行任何变换或操作, 只是将输入返回作为输出
             args.model = BaseHeadSplit(args.model, args.head)
             server = FedAvg(args, i)
 

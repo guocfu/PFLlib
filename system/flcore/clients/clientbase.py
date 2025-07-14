@@ -20,7 +20,7 @@ class Client(object):
         self.algorithm = args.algorithm
         self.dataset = args.dataset
         self.device = args.device
-        self.id = id  # integer
+        self.id = id  # integer 究竟是client的id还是数据集的id?或者说每个client都固定了数据集
         self.save_folder_name = args.save_folder_name
 
         self.num_classes = args.num_classes
@@ -41,7 +41,7 @@ class Client(object):
         self.train_slow = kwargs['train_slow']
         self.send_slow = kwargs['send_slow']
         self.train_time_cost = {'num_rounds': 0, 'total_cost': 0.0}
-        self.send_time_cost = {'num_rounds': 0, 'total_cost': 0.0}
+        self.send_time_cost = {'num_rounds': 0, 'total_cost': 0.0} # client的通信成本, 包括通信轮数和总通信时长
 
         self.loss = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
@@ -65,15 +65,18 @@ class Client(object):
         return DataLoader(test_data, batch_size, drop_last=False, shuffle=True)
         
     def set_parameters(self, model):
+        """加载模型到本地模型"""
         for new_param, old_param in zip(model.parameters(), self.model.parameters()):
             old_param.data = new_param.data.clone()
 
     def clone_model(self, model, target):
+        """将模型参数克隆到目标模型参数"""
         for param, target_param in zip(model.parameters(), target.parameters()):
             target_param.data = param.data.clone()
             # target_param.grad = param.grad.clone()
 
     def update_parameters(self, model, new_params):
+        """将新参数更新到模型中"""
         for param, new_param in zip(model.parameters(), new_params):
             param.data = new_param.data.clone()
 

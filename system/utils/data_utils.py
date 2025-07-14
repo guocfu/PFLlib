@@ -5,6 +5,7 @@ from collections import defaultdict
 
 
 def read_data(dataset, idx, is_train=True):
+    """读取指定idx的训练集或测试集"""
     if is_train:
         data_dir = os.path.join('../dataset', dataset, 'train/')
     else:
@@ -17,6 +18,7 @@ def read_data(dataset, idx, is_train=True):
 
 
 def read_client_data(dataset, idx, is_train=True, few_shot=0):
+    """加载数据集, 并根据数据集的类型进行预处理"""
     data = read_data(dataset, idx, is_train)
     if "News" in dataset:
         data_list = process_text(data)

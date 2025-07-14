@@ -8,7 +8,6 @@ class FedAvg(Server):
     def __init__(self, args, times):
         super().__init__(args, times)
 
-        # select slow clients
         self.set_slow_clients()
         self.set_clients(clientAVG)
 
@@ -20,9 +19,10 @@ class FedAvg(Server):
 
 
     def train(self):
+        """服务端开始训练, 总共训练global_rounds轮次"""
         for i in range(self.global_rounds+1):
             s_t = time.time()
-            self.selected_clients = self.select_clients()
+            self.selected_clients = self.select_clients() # 每个round随机选择特定比例的client
             self.send_models()
 
             if i%self.eval_gap == 0:
@@ -30,6 +30,7 @@ class FedAvg(Server):
                 print("\nEvaluate global model")
                 self.evaluate()
 
+            # 对每个被选中的client分别训练
             for client in self.selected_clients:
                 client.train()
 
