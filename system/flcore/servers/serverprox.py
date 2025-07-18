@@ -5,6 +5,7 @@ from threading import Thread
 
 
 class FedProx(Server):
+    """ServerProx代码内容与ServerAvg完全一样"""
     def __init__(self, args, times):
         super().__init__(args, times)
 

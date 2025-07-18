@@ -15,7 +15,7 @@ class FedAvg(Server):
         print("Finished creating server and clients.")
 
         # self.load_model()
-        self.Budget = []
+        self.Budget = [] # 每轮round所需时间
 
 
     def train(self):
@@ -40,6 +40,7 @@ class FedAvg(Server):
             # [t.join() for t in threads]
 
             self.receive_models()
+            # 是否使用dlg算法进行评估
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.aggregate_parameters()

@@ -76,6 +76,9 @@ class SCAFFOLD(Server):
 
 
     def send_models(self):
+        """重写send_models方法, 为所有的client更新全局模型以及通信成本
+            
+            因为clientSCAFFOLD的set_parameters方法所需参数有所改变, 不能用Server基类的send_models方法"""
         assert (len(self.clients) > 0)
 
         for client in self.clients:
@@ -87,6 +90,10 @@ class SCAFFOLD(Server):
             client.send_time_cost['total_cost'] += 2 * (time.time() - start_time)
 
     def receive_models(self):
+        """重写receive_models方法, server接受符合条件的client信息
+        
+            server不用接受client的模型信息, 因为更新全局模型x和全局控制变量所需的delta_y和delta_c可以由clientSCAFFOLD.update_yc()获得
+        """
         assert (len(self.selected_clients) > 0)
 
         active_clients = random.sample(
@@ -113,6 +120,8 @@ class SCAFFOLD(Server):
             self.uploaded_weights[i] = w / tot_samples
 
     def aggregate_parameters(self):
+        """重写aggregate_parameters()方法, 更新全局模型x以及全局控制变量c
+        """
         # # original version
         # for dy, dc in zip(self.delta_ys, self.delta_cs):
         #     for server_param, client_param in zip(self.global_model.parameters(), dy):
@@ -126,7 +135,7 @@ class SCAFFOLD(Server):
         for cid in self.uploaded_ids:
             dy, dc = self.clients[cid].delta_yc()
             for server_param, client_param in zip(global_model.parameters(), dy):
-                server_param.data += client_param.data.clone() / self.num_join_clients * self.server_learning_rate
+                server_param.data += client_param.data.clone() / self.num_join_clients * self.server_learning_rate # .clone()是一种安全措施, 确保server聚合时用的是参数的副本, 不会影响客户端原始数据, 这样做更稳妥
             for server_param, client_param in zip(global_c, dc):
                 server_param.data += client_param.data.clone() / self.num_clients
         self.global_model = global_model
@@ -134,6 +143,7 @@ class SCAFFOLD(Server):
 
     # fine-tuning on new clients
     def fine_tuning_new_clients(self):
+        """与serverbase中fine_tuning_new_clients()方法一模一样, 有必要重写吗?"""
         for client in self.new_clients:
             client.set_parameters(self.global_model, self.global_c)
             opt = torch.optim.SGD(client.model.parameters(), lr=self.learning_rate)

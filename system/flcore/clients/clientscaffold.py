@@ -67,12 +67,18 @@ class clientSCAFFOLD(Client):
         self.global_model = model
 
     def update_yc(self, max_local_epochs=None):
+        """更新client的c_i, 使用的是第二种更新方式
+        
+            SCAFFOLD论文中并未提及c_i的更新需要涉及batch数量(self.num_batches)
+            代码实现中额外加上这一参数可能是作者在工程上的调整(可能是为了归一化或平滑参数更新, 使得不同batch_size或epoch更新幅度保持一致)
+        """
         if max_local_epochs is None:
             max_local_epochs = self.local_epochs
         for ci, c, x, yi in zip(self.client_c, self.global_c, self.global_model.parameters(), self.model.parameters()):
             ci.data = ci - c + 1/self.num_batches/max_local_epochs/self.learning_rate * (x - yi)
 
     def delta_yc(self, max_local_epochs=None):
+        """计算更新后的本地client模型y_i和全局模型x之间的差值, 以及更新后的c_i^+和原c_i的差值, 以便更新全局模型x和全局控制变量c"""
         if max_local_epochs is None:
             max_local_epochs = self.local_epochs
         delta_y = []

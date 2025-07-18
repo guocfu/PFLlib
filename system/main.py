@@ -72,8 +72,9 @@ def run(args):
 
     time_list = []
     reporter = MemReporter()
-    model_str = args.model
+    model_str = args.model # 将args接收的model字符串转换成真正的model
 
+    # 第prev次到第times次实验
     for i in range(args.prev, args.times):
         print(f"\n============= Running time: {i}th =============")
         print("Creating server and clients ...")
@@ -416,12 +417,12 @@ if __name__ == "__main__":
     parser.add_argument('-pv', "--prev", type=int, default=0,
                         help="Previous Running times")
     parser.add_argument('-t', "--times", type=int, default=1,
-                        help="Running times")
+                        help="Running times 运行次数")
     parser.add_argument('-eg', "--eval_gap", type=int, default=1,
                         help="Rounds gap for evaluation")
     parser.add_argument('-sfn', "--save_folder_name", type=str, default='items')
-    parser.add_argument('-ab', "--auto_break", type=bool, default=False)
-    parser.add_argument('-dlg', "--dlg_eval", type=bool, default=False)
+    parser.add_argument('-ab', "--auto_break", type=bool, default=False,help='round过程中是否自动停止')
+    parser.add_argument('-dlg', "--dlg_eval", type=bool, default=False) #好像是使用DLG算法评估梯度是否会泄漏原始数据
     parser.add_argument('-dlgg', "--dlg_gap", type=int, default=100)
     parser.add_argument('-bnpc', "--batch_num_per_client", type=int, default=2)
     parser.add_argument('-nnc', "--num_new_clients", type=int, default=0)

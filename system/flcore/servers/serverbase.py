@@ -114,7 +114,7 @@ class Server(object):
         return selected_clients
 
     def send_models(self):
-        """为所有的client更新模型参数"""
+        """为所有的client更新全局模型以及通信成本"""
         assert (len(self.clients) > 0)
 
         for client in self.clients:
@@ -126,17 +126,24 @@ class Server(object):
             client.send_time_cost['total_cost'] += 2 * (time.time() - start_time) # 计算通信总时长
 
     def receive_models(self):
+        """Server接受耗时小于时长阈值的Client信息
+        
+            Server接受Client的id, 该Client所占权重(本地样本长度/本次round有效的Client的总样本长度), 该Client的模型
+        """
         assert (len(self.selected_clients) > 0)
 
+        # 有效(当前活动的)client对象列表
         active_clients = random.sample(
             self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients))
 
+        # Server接受的Client的id, 该Client所占权重(本地样本长度/本次round有效的Client的总样本长度), 该Client的模型
         self.uploaded_ids = []
         self.uploaded_weights = []
         self.uploaded_models = []
         tot_samples = 0
         for client in active_clients:
             try:
+                # 计算client单次训练和通信时长
                 client_time_cost = client.train_time_cost['total_cost'] / client.train_time_cost['num_rounds'] + \
                         client.send_time_cost['total_cost'] / client.send_time_cost['num_rounds']
             except ZeroDivisionError:
@@ -150,6 +157,7 @@ class Server(object):
             self.uploaded_weights[i] = w / tot_samples
 
     def aggregate_parameters(self):
+        """将Server接受的Client模型按权重进行参数聚合"""
         assert (len(self.uploaded_models) > 0)
 
         self.global_model = copy.deepcopy(self.uploaded_models[0])
@@ -160,8 +168,10 @@ class Server(object):
             self.add_parameters(w, client_model)
 
     def add_parameters(self, w, client_model):
+        """根据每个client的权重将client model聚合到全局模型中"""
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
             server_param.data += client_param.data.clone() * w
+        
 
     def save_global_model(self):
         model_path = os.path.join("models", self.dataset)
@@ -182,6 +192,7 @@ class Server(object):
         return os.path.exists(model_path)
         
     def save_results(self):
+        """保存模型指标"""
         algo = self.dataset + "_" + self.algorithm
         result_path = "../results/"
         if not os.path.exists(result_path):
@@ -240,6 +251,7 @@ class Server(object):
 
     # evaluate selected clients
     def evaluate(self, acc=None, loss=None):
+        """评估被选中的clients(新增的clients)"""
         stats = self.test_metrics()
         stats_train = self.train_metrics()
 

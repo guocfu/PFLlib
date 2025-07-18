@@ -1,0 +1,3 @@
+serveravg.py中
+43行的call_dlg算法
+51行的check_done

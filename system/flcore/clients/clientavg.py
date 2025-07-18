@@ -17,6 +17,7 @@ class clientAVG(Client):
         start_time = time.time()
 
         max_local_epochs = self.local_epochs
+        # 如果该client是慢速设备, 那么本次round的训练epoch将减小
         if self.train_slow:
             max_local_epochs = np.random.randint(1, max_local_epochs // 2)
 

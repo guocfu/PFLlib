@@ -16,6 +16,7 @@ class clientProx(Client):
         self.global_params = copy.deepcopy(list(self.model.parameters()))
 
         self.loss = nn.CrossEntropyLoss()
+        # 定义了与clientAvg不同的optimizer, 并传入mu
         self.optimizer = PerturbedGradientDescent(
             self.model.parameters(), lr=self.learning_rate, mu=self.mu)
         self.learning_rate_scheduler = torch.optim.lr_scheduler.ExponentialLR(

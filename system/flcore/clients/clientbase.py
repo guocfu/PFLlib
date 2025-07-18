@@ -12,6 +12,12 @@ from utils.data_utils import read_client_data
 class Client(object):
     """
     Base class for clients in federated learning.
+    
+    args:
+        id: client的id
+        tran_samples: 训练集数量
+        test_samples: 测试集数量
+
     """
 
     def __init__(self, args, id, train_samples, test_samples, **kwargs):
@@ -38,8 +44,8 @@ class Client(object):
                 self.has_BatchNorm = True
                 break
 
-        self.train_slow = kwargs['train_slow']
-        self.send_slow = kwargs['send_slow']
+        self.train_slow = kwargs['train_slow'] # 是否是train_slow
+        self.send_slow = kwargs['send_slow']   # 是否是send_slow
         self.train_time_cost = {'num_rounds': 0, 'total_cost': 0.0}
         self.send_time_cost = {'num_rounds': 0, 'total_cost': 0.0} # client的通信成本, 包括通信轮数和总通信时长
 
